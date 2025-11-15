@@ -137,19 +137,24 @@ const App: React.FC = () => {
     }
   }, []);
   
-  const handleSaveSession = useCallback(async (resultToSave: AnalysisResult) => {
+  const handleSaveSession = useCallback(async (resultToSave: AnalysisResult, thumbnailBase64ForSave: string | null) => {
     if (!videoData.title) return; // Don't save if there's no title
     
     const newSession: Omit<Session, 'id' | 'user_id' | 'created_at'> = {
       videoTitle: videoData.title,
       videoData,
       analysisResult: resultToSave,
-      thumbnailPreview: thumbnail.preview,
+      thumbnailPreview: thumbnailBase64ForSave, // Save Base64 string
     };
     
-    await sessionService.saveSession(newSession, user);
-    await loadSessions(user); // Refresh session list
-  }, [videoData, thumbnail.preview, user, loadSessions]);
+    try {
+        await sessionService.saveSession(newSession, user);
+        await loadSessions(user); // Refresh session list
+    } catch (error) {
+        console.error("Failed to save session:", error);
+        // Optionally notify user that saving failed
+    }
+  }, [videoData, user, loadSessions]);
 
 
   const handleAnalyze = async () => {
@@ -166,7 +171,8 @@ const App: React.FC = () => {
     let thumbnailBase64: string | null = null;
     if (thumbnail.file) {
       try {
-        thumbnailBase64 = await fileToBase64(thumbnail.file);
+        const base64String = await fileToBase64(thumbnail.file);
+        thumbnailBase64 = `data:${thumbnail.file.type};base64,${base64String}`;
       } catch (err) {
         setError('Lỗi xử lý ảnh thumbnail.');
         setIsLoading(false);
@@ -175,9 +181,9 @@ const App: React.FC = () => {
     }
     
     try {
-        const result = await analyzeVideoContent(videoData, thumbnailBase64, apiConfig);
+        const result = await analyzeVideoContent(videoData, thumbnailBase64 ? thumbnailBase64.split(',')[1] : null, apiConfig);
         setAnalysisResult(result);
-        await handleSaveSession(result);
+        await handleSaveSession(result, thumbnailBase64);
     } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`Phân tích thất bại: ${errorMessage}`);
@@ -189,6 +195,7 @@ const App: React.FC = () => {
   const handleLoadSession = (session: Session) => {
       setVideoData(session.videoData);
       setAnalysisResult(session.analysisResult);
+      // The saved preview is now a Base64 string, which can be used directly
       setThumbnail({ file: null, preview: session.thumbnailPreview });
       setIsLibraryModalOpen(false);
   }
