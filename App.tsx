@@ -182,7 +182,7 @@ const App: React.FC = () => {
       videoTitle: videoData.title,
       videoData,
       analysisResult: resultToSave,
-      thumbnailPreview: null, // Temporarily disable thumbnail saving to prevent white screen bug
+      thumbnailPreview: null, // Thumbnail saving is disabled to prevent potential rendering bugs.
     };
     
     try {
@@ -220,8 +220,7 @@ const App: React.FC = () => {
     try {
         const result = await analyzeVideoContent(videoData, pureBase64, apiConfig);
         setAnalysisResult(result);
-        // Temporarily disable session saving to fix white screen bug
-        // await handleSaveSession(result);
+        await handleSaveSession(result);
     } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`Phân tích thất bại: ${errorMessage}`);
