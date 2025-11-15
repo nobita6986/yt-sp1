@@ -1,4 +1,16 @@
 
+import type { User } from '@supabase/supabase-js';
+
+export type AIProvider = 'gemini' | 'openai';
+
+export interface ApiConfig {
+    provider: AIProvider;
+    model: string;
+    geminiKey: string;
+    openAIKey: string;
+    youtubeKey: string;
+}
+
 export interface VideoData {
   title: string;
   description: string;
@@ -7,6 +19,7 @@ export interface VideoData {
   youtubeLink: string;
 }
 
+// Giữ lại interface cũ để tương thích, nhưng ApiConfig mới sẽ được ưu tiên sử dụng
 export interface ApiKeys {
   gemini: string;
   youtube: string;
@@ -33,7 +46,7 @@ export interface Keyword {
 export interface ThumbnailVariant {
   id: string;
   rationale: string;
-  imageUrl?: string; // For potential future use where AI generates image variants
+  imageUrl?: string;
 }
 
 export interface Recommendations {
@@ -54,4 +67,15 @@ export interface AnalysisResult {
   };
   issues: Issue[];
   recommendations: Recommendations;
+}
+
+
+export interface Session {
+    id: string;
+    user_id?: string;
+    created_at: string;
+    videoTitle: string;
+    videoData: VideoData;
+    analysisResult: AnalysisResult;
+    thumbnailPreview: string | null;
 }

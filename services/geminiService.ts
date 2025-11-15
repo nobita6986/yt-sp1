@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from '@google/genai';
-import type { VideoData, AnalysisResult } from '../types';
+import type { VideoData, AnalysisResult, ApiConfig } from '../types';
 
 const responseSchema = {
   type: Type.OBJECT,
@@ -89,12 +89,16 @@ const responseSchema = {
   },
 };
 
-export const analyzeVideoContent = async (videoData: VideoData, thumbnailBase64: string | null, apiKey: string): Promise<AnalysisResult> => {
-  if (!apiKey) {
+export const analyzeVideoContent = async (videoData: VideoData, thumbnailBase64: string | null, config: ApiConfig): Promise<AnalysisResult> => {
+  if (config.provider === 'openai') {
+      throw new Error("OpenAI provider is not yet implemented.");
+  }
+
+  if (!config.geminiKey) {
     throw new Error("Gemini API Key is not provided. Please add it in the configuration section.");
   }
   
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: config.geminiKey });
 
   const prompt = `
     Act as an expert YouTube growth consultant and policy specialist. Your name is ClearCue.
@@ -137,18 +141,19 @@ export const analyzeVideoContent = async (videoData: VideoData, thumbnailBase64:
   
   const parts: ({ text: string } | { inlineData: { mimeType: string; data: string; } })[] = [];
 
+  parts.push({ text: prompt });
+
   if (thumbnailBase64) {
-    parts.push({
+    parts.unshift({ // Add image first for better performance in some models
         inlineData: {
           mimeType: 'image/jpeg',
           data: thumbnailBase64,
         },
       });
   }
-  parts.push({ text: prompt });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: config.model,
     contents: { parts: parts },
     config: {
         responseMimeType: "application/json",
