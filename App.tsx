@@ -102,11 +102,25 @@ const App: React.FC = () => {
     setError(null);
     try {
         const metadata = await fetchVideoMetadata(videoId, apiConfig.youtubeKey);
+        const { thumbnailUrl, ...videoMeta } = metadata;
+
         setVideoData(prev => ({
             ...prev,
-            ...metadata,
+            ...videoMeta,
             youtubeLink: url
         }));
+
+        if (thumbnailUrl) {
+          const imageResponse = await fetch(thumbnailUrl);
+          if (!imageResponse.ok) {
+            throw new Error('Không thể tải thumbnail.');
+          }
+          const imageBlob = await imageResponse.blob();
+          const thumbnailFile = new File([imageBlob], 'thumbnail.jpg', { type: imageBlob.type });
+          const preview = URL.createObjectURL(thumbnailFile);
+          setThumbnail({ file: thumbnailFile, preview: preview });
+        }
+
     } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`Lỗi lấy metadata: ${errorMessage}`);

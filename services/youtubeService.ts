@@ -1,7 +1,7 @@
 
 import type { VideoData } from '../types';
 
-export const fetchVideoMetadata = async (videoId: string, apiKey: string): Promise<Partial<VideoData>> => {
+export const fetchVideoMetadata = async (videoId: string, apiKey: string): Promise<Partial<VideoData> & { thumbnailUrl?: string }> => {
   if (!apiKey) {
     throw new Error('YouTube API key is not provided.');
   }
@@ -17,10 +17,15 @@ export const fetchVideoMetadata = async (videoId: string, apiKey: string): Promi
     
     if (data.items && data.items.length > 0) {
       const snippet = data.items[0].snippet;
+      const thumbnails = snippet.thumbnails;
+      // Prioritize highest resolution thumbnail
+      const thumbnailUrl = thumbnails.maxres?.url || thumbnails.standard?.url || thumbnails.high?.url || thumbnails.medium?.url || thumbnails.default?.url;
+
       return {
         title: snippet.title || '',
         description: snippet.description || '',
         tags: (snippet.tags || []).join(','),
+        thumbnailUrl: thumbnailUrl,
       };
     } else {
       throw new Error('Video not found or access is restricted.');
