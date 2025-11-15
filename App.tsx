@@ -186,7 +186,8 @@ const App: React.FC = () => {
     try {
         const result = await analyzeVideoContent(videoData, pureBase64, apiConfig);
         setAnalysisResult(result);
-        await handleSaveSession(result);
+        // Temporarily disable session saving to fix white screen bug
+        // await handleSaveSession(result);
     } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(`Phân tích thất bại: ${errorMessage}`);
