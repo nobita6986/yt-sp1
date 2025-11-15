@@ -6,6 +6,7 @@ import { fetchVideoMetadata } from './services/youtubeService';
 import { extractVideoId } from './utils/youtubeUtils';
 import { supabase } from './services/supabaseClient';
 import * as sessionService from './services/sessionService';
+import * as apiConfigService from './services/apiConfigService';
 import Header from './components/Header';
 import InputSection from './components/InputSection';
 import ThumbnailSection from './components/ThumbnailSection';
@@ -43,28 +44,31 @@ const App: React.FC = () => {
       youtubeKey: '',
   });
 
-  // Fetch sessions on user change
-  const loadSessions = useCallback(async (currentUser: User | null) => {
-      const userSessions = await sessionService.getSessions(currentUser);
-      setSessions(userSessions);
-  }, []);
-
   // Supabase Auth Effect
   useEffect(() => {
+    const loadDataForUser = async (currentUser: User | null) => {
+        const [userSessions, config] = await Promise.all([
+            sessionService.getSessions(currentUser),
+            apiConfigService.getApiConfig(currentUser)
+        ]);
+        setSessions(userSessions);
+        setApiConfig(config);
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      loadSessions(currentUser);
+      loadDataForUser(currentUser); // Load sessions and config on auth change
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
-        loadSessions(currentUser);
+        loadDataForUser(currentUser); // Load initial sessions and config
     });
 
     return () => subscription.unsubscribe();
-  }, [loadSessions]);
+  }, []);
 
   const handleLogin = async () => {
     await supabase.auth.signInWithOAuth({ provider: 'google' });
@@ -149,12 +153,12 @@ const App: React.FC = () => {
     
     try {
         await sessionService.saveSession(newSession, user);
-        await loadSessions(user); // Refresh session list
+        const userSessions = await sessionService.getSessions(user);
+        setSessions(userSessions);
     } catch (error) {
         console.error("Failed to save session:", error);
-        // Optionally notify user that saving failed
     }
-  }, [videoData, user, loadSessions]);
+  }, [videoData, user]);
 
 
   const handleAnalyze = async () => {
@@ -169,10 +173,11 @@ const App: React.FC = () => {
     setIsLoading(true);
 
     let thumbnailBase64: string | null = null;
+    let pureBase64: string | null = null;
     if (thumbnail.file) {
       try {
-        const base64String = await fileToBase64(thumbnail.file);
-        thumbnailBase64 = `data:${thumbnail.file.type};base64,${base64String}`;
+        pureBase64 = await fileToBase64(thumbnail.file);
+        thumbnailBase64 = `data:${thumbnail.file.type};base64,${pureBase64}`;
       } catch (err) {
         setError('Lỗi xử lý ảnh thumbnail.');
         setIsLoading(false);
@@ -181,7 +186,7 @@ const App: React.FC = () => {
     }
     
     try {
-        const result = await analyzeVideoContent(videoData, thumbnailBase64 ? thumbnailBase64.split(',')[1] : null, apiConfig);
+        const result = await analyzeVideoContent(videoData, pureBase64, apiConfig);
         setAnalysisResult(result);
         await handleSaveSession(result, thumbnailBase64);
     } catch (err: unknown) {
@@ -195,14 +200,14 @@ const App: React.FC = () => {
   const handleLoadSession = (session: Session) => {
       setVideoData(session.videoData);
       setAnalysisResult(session.analysisResult);
-      // The saved preview is now a Base64 string, which can be used directly
       setThumbnail({ file: null, preview: session.thumbnailPreview });
       setIsLibraryModalOpen(false);
   }
 
   const handleDeleteSession = async (sessionId: string) => {
       await sessionService.deleteSession(sessionId, user);
-      await loadSessions(user);
+      const userSessions = await sessionService.getSessions(user);
+      setSessions(userSessions);
   }
 
 
@@ -245,9 +250,15 @@ const App: React.FC = () => {
           <ApiConfigModal 
             config={apiConfig}
             onClose={() => setIsApiModalOpen(false)}
-            onSave={(newConfig) => {
-                setApiConfig(newConfig);
-                setIsApiModalOpen(false);
+            onSave={async (newConfig) => {
+                try {
+                    await apiConfigService.saveApiConfig(newConfig, user);
+                    setApiConfig(newConfig);
+                    setIsApiModalOpen(false);
+                } catch (err) {
+                    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+                    setError(`Không thể lưu cấu hình API: ${errorMessage}`);
+                }
             }}
           />
       )}
