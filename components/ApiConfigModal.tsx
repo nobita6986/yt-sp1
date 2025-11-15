@@ -78,6 +78,10 @@ const ApiConfigModal: React.FC<ApiConfigModalProps> = ({ config, onClose, onSave
                         <label htmlFor="youtubeKey" className="block text-sm font-medium text-brand-text-secondary mb-2">YouTube Data API Key</label>
                         <input type="password" id="youtubeKey" name="youtubeKey" value={currentConfig.youtubeKey} onChange={handleChange} placeholder="Nhập YouTube API Key để lấy metadata" className="w-full bg-brand-bg border border-brand-border rounded-md px-3 py-2 text-brand-text-primary"/>
                     </div>
+                    <div>
+                        <label htmlFor="youtubeTranscriptKey" className="block text-sm font-medium text-brand-text-secondary mb-2">YouTube Transcript API Key</label>
+                        <input type="password" id="youtubeTranscriptKey" name="youtubeTranscriptKey" value={currentConfig.youtubeTranscriptKey} onChange={handleChange} placeholder="Nhập API Key từ youtube-transcript.io" className="w-full bg-brand-bg border border-brand-border rounded-md px-3 py-2 text-brand-text-primary"/>
+                    </div>
                      <p className="text-xs text-brand-text-secondary">Nếu bạn đã đăng nhập, cấu hình sẽ được lưu vào tài khoản của bạn. Nếu không, nó sẽ được lưu trên trình duyệt này.</p>
                 </div>
 

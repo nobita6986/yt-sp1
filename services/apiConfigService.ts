@@ -10,6 +10,7 @@ const DEFAULT_CONFIG: ApiConfig = {
     geminiKey: '',
     openAIKey: '',
     youtubeKey: '',
+    youtubeTranscriptKey: '6918b060522a1fa0d931dad6', // Default key for convenience
 };
 
 // --- Local Storage Functions ---
@@ -40,7 +41,7 @@ export const getApiConfig = async (user: User | null): Promise<ApiConfig> => {
     if (user) {
         const { data, error } = await supabase
             .from('user_api_configs')
-            .select('provider, model, gemini_key, openai_key, youtube_key')
+            .select('provider, model, gemini_key, openai_key, youtube_key, youtube_transcript_key')
             .eq('user_id', user.id)
             .single();
 
@@ -57,6 +58,7 @@ export const getApiConfig = async (user: User | null): Promise<ApiConfig> => {
                 geminiKey: data.gemini_key || '',
                 openAIKey: data.openai_key || '',
                 youtubeKey: data.youtube_key || '',
+                youtubeTranscriptKey: data.youtube_transcript_key || '',
             };
         }
         return DEFAULT_CONFIG;
@@ -74,6 +76,7 @@ export const saveApiConfig = async (config: ApiConfig, user: User | null): Promi
             gemini_key: config.geminiKey,
             openai_key: config.openAIKey,
             youtube_key: config.youtubeKey,
+            youtube_transcript_key: config.youtubeTranscriptKey,
             updated_at: new Date().toISOString(),
         });
 

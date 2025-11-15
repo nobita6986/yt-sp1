@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import type { AnalysisResult, VideoData, ApiConfig, Session } from './types';
 import { analyzeVideoContent } from './services/geminiService';
 import { fetchVideoMetadata } from './services/youtubeService';
+import { fetchTranscript } from './services/transcriptService';
 import { extractVideoId } from './utils/youtubeUtils';
 import { supabase } from './services/supabaseClient';
 import * as sessionService from './services/sessionService';
@@ -29,6 +30,7 @@ const App: React.FC = () => {
   // UI State
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isFetchingMeta, setIsFetchingMeta] = useState<boolean>(false);
+  const [isFetchingTranscript, setIsFetchingTranscript] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isApiModalOpen, setIsApiModalOpen] = useState<boolean>(false);
   const [isLibraryModalOpen, setIsLibraryModalOpen] = useState<boolean>(false);
@@ -42,6 +44,7 @@ const App: React.FC = () => {
       geminiKey: '',
       openAIKey: '',
       youtubeKey: '',
+      youtubeTranscriptKey: '6918b060522a1fa0d931dad6',
   });
 
   // Supabase Auth Effect
@@ -132,6 +135,37 @@ const App: React.FC = () => {
         setIsFetchingMeta(false);
     }
   }, [apiConfig.youtubeKey, videoData.youtubeLink]);
+
+  const handleFetchTranscript = useCallback(async () => {
+    const url = videoData.youtubeLink;
+    if (!url) {
+      setError("Vui lòng nhập một link YouTube trước.");
+      return;
+    }
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+      setError("Link YouTube không hợp lệ.");
+      return;
+    }
+    if (!apiConfig.youtubeTranscriptKey) {
+      setError("Vui lòng nhập YouTube Transcript API Key trong Cấu hình API.");
+      setIsApiModalOpen(true);
+      return;
+    }
+
+    setIsFetchingTranscript(true);
+    setError(null);
+    try {
+      const transcriptText = await fetchTranscript(videoId, apiConfig.youtubeTranscriptKey);
+      setVideoData(prev => ({ ...prev, transcript: transcriptText }));
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(`Lỗi lấy transcript: ${errorMessage}`);
+    } finally {
+      setIsFetchingTranscript(false);
+    }
+  }, [apiConfig.youtubeTranscriptKey, videoData.youtubeLink]);
+
 
   const handleThumbnailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -227,7 +261,9 @@ const App: React.FC = () => {
               placeholders={placeholderVideoData} 
               onInputChange={handleInputChange} 
               onFetchMetadata={handleFetchMetadata}
+              onFetchTranscript={handleFetchTranscript}
               isFetchingMeta={isFetchingMeta}
+              isFetchingTranscript={isFetchingTranscript}
             />
           </div>
           <div className="lg:col-span-2 space-y-8">

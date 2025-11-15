@@ -9,6 +9,7 @@ export interface ApiConfig {
     geminiKey: string;
     openAIKey: string;
     youtubeKey: string;
+    youtubeTranscriptKey: string;
 }
 
 export interface VideoData {
