@@ -75,9 +75,22 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ result, isLoading, erro
       </div>
 
       <div className="space-y-4">
-        <RecommendationCard title="Phân tích & Gợi ý SEO (Tăng CTR)" recommendations={result.recommendations.titles.map(t => ({type: 'title', content: t}))} issues={result.issues}/>
-        <RecommendationCard title="Gợi ý Mô tả (Tối ưu Algorithm)" recommendations={[{type: 'description', content: result.recommendations.description}]} />
-        <RecommendationCard title="Gợi ý Tags (Tăng khả năng được khám phá)" recommendations={[{type: 'tags', content: result.recommendations.hashtags.join(', ')}]} />
+        <RecommendationCard 
+            title="Phân tích & Gợi ý SEO (Tăng CTR)" 
+            recommendations={(result.recommendations?.titles ?? []).map(t => ({type: 'title', content: t}))} 
+            issues={result.issues}
+        />
+        <RecommendationCard 
+            title="Gợi ý Mô tả (Tối ưu Algorithm)" 
+            recommendations={[{type: 'description', content: result.recommendations?.description ?? 'Không có gợi ý mô tả.'}]} 
+        />
+        <RecommendationCard 
+            title="Gợi ý Tags (Tăng khả năng được khám phá)" 
+            recommendations={[{
+                type: 'tags', 
+                content: (result.recommendations?.hashtags ?? []).join(', ') || 'Không có gợi ý tags.'
+            }]} 
+        />
       </div>
 
     </div>
