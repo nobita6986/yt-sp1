@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { AnalysisResult } from '../types';
 import LoadingSpinner from './LoadingSpinner';
@@ -43,13 +42,16 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ result, isLoading, erro
     );
   }
 
+  const complianceScore = result.scores?.compliance?.score ?? 0;
+  const thumbnailScore = result.scores?.thumbnail?.score ?? 0;
+  const titleScore = result.scores?.title?.score ?? 0;
+  const descriptionScore = result.scores?.description?.score ?? 0;
+  const seoOpportunityScore = result.scores?.seoOpportunity?.score ?? 0;
+
   const overallScore = Math.round(
-      (result.scores.compliance.score +
-      result.scores.thumbnail.score +
-      result.scores.title.score +
-      result.scores.description.score +
-      result.scores.seoOpportunity.score) / 5
+    (complianceScore + thumbnailScore + titleScore + descriptionScore + seoOpportunityScore) / 5
   );
+
 
   return (
     <div className="bg-brand-surface border border-brand-border rounded-lg p-6 space-y-8">
@@ -67,11 +69,11 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ result, isLoading, erro
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
-          <ScoreCard title="Tuân thủ" score={result.scores.compliance.score} />
-          <ScoreCard title="Thumbnail" score={result.scores.thumbnail.score} />
-          <ScoreCard title="Tiêu đề" score={result.scores.title.score} />
-          <ScoreCard title="Mô tả" score={result.scores.description.score} />
-          <ScoreCard title="Cơ hội SEO" score={result.scores.seoOpportunity.score} />
+          <ScoreCard title="Tuân thủ" score={complianceScore} />
+          <ScoreCard title="Thumbnail" score={thumbnailScore} />
+          <ScoreCard title="Tiêu đề" score={titleScore} />
+          <ScoreCard title="Mô tả" score={descriptionScore} />
+          <ScoreCard title="Cơ hội SEO" score={seoOpportunityScore} />
       </div>
 
       <div className="space-y-4">
